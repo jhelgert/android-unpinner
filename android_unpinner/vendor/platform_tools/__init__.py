@@ -17,7 +17,7 @@ else:
 
 def split_cmd_str(s: str) -> list[str]:
     """Split a string into words, preserving quoted substrings."""
-    pattern = r'("[^"]*")|(\S+)'
+    pattern = r'"([^"]*)"|(\S+)'
     return [match[0] or match[1] for match in re.findall(pattern, s)]
 
 
