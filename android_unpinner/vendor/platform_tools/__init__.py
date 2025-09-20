@@ -1,4 +1,5 @@
 import logging
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -14,21 +15,27 @@ else:
     adb_binary = here / "linux" / "adb"
 
 
+def split_cmd_str(s: str) -> list[str]:
+    """Split a string into words, preserving quoted substrings."""
+    pattern = r'("[^"]*")|(\S+)'
+    return [match[0] or match[1] for match in re.findall(pattern, s)]
+
+
 def adb(cmd: str) -> subprocess.CompletedProcess[str]:
     """Helper function to call adb and capture stdout."""
-    base = f"{adb_binary}"
+    base = [f"{adb_binary}"]
     if device:
-        base += f" -s {device}"
+        base.extend(["-s", device])
         logging.debug(f"Using device: {device}")
-    full_cmd = f"{base} {cmd}"
+    full_cmd = base + split_cmd_str(cmd)
     try:
         proc = subprocess.run(
             full_cmd, shell=False, check=True, capture_output=True, text=True
         )
     except subprocess.CalledProcessError as e:
-        logging.debug(f"cmd='{full_cmd}'\n" f"{e.stdout=}\n" f"{e.stderr=}")
+        logging.debug(f"cmd='{full_cmd}'\n{e.stdout=}\n{e.stderr=}")
         raise
-    logging.debug(f"cmd='{full_cmd}'\n" f"{proc.stdout=}\n" f"{proc.stderr=}")
+    logging.debug(f"cmd='{full_cmd}'\n{proc.stdout=}\n{proc.stderr=}")
     return proc
 
 
